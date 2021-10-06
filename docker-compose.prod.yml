@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+  strapi-prod:
+    image: strapi/strapi
+    container_name: strapi-prod
+    restart: unless-stopped
+    env_file: .envs/.prod/.env
+    networks:
+      - strapi-app-network
+    volumes:
+      - ./app:/srv/app
+    ports:
+      - "1337:1337"
+    depends_on:
+      - mongo-prod
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi.rule=Host(`blog.mydomain.com`)"
+      - "traefik.http.routers.fastapi.tls=true"
+      - "traefik.http.routers.fastapi.tls.certresolver=letsencrypt"
+
+  mongo-prod:
+    image: mongo
+    container_name: mongo-prod
+    restart: unless-stopped
+    env_file: .envs/.prod/.env
+    networks:
+      - strapi-app-network
+    volumes:
+      - strapidata:/data/db
+    ports:
+      - "27017:27017"
+  
+  traefik-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.traefik
+    container_name: traefik-prod
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik-public-certificates:/certificates"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`blog-dashboard.mydomain.com`) && (PathPrefix(`/`)"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=foxtrot:$$apr1$$RO48PMj9$$Rc8L5j2ivDcWhdLX51J4N/"
+    networks:
+      - strapi-app-network
+
+networks:
+  strapi-app-network:
+    driver: bridge
+
+volumes:
+  strapidata:
