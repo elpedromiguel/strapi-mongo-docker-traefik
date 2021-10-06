@@ -1,6 +1,8 @@
 # strapi-mongo-docker-traefik
 Dockerizing Strapi with MongoDb and Traefik
 
+# ToDo
+- Add GraphQl
 
 - For local
     - docker compose up --build
