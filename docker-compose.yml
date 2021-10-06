@@ -1,0 +1,35 @@
+version: "3"
+
+services:
+  strapi:
+    image: strapi/strapi
+    container_name: strapi
+    restart: unless-stopped
+    env_file: .envs/.local/.env
+    networks:
+      - strapi-app-network
+    volumes:
+      - ./app:/srv/app
+    ports:
+      - "1337:1337"
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo
+    container_name: mongo
+    restart: unless-stopped
+    env_file: .envs/.local/.env
+    networks:
+      - strapi-app-network
+    volumes:
+      - strapidata:/data/db
+    ports:
+      - "27017:27017"
+
+networks:
+  strapi-app-network:
+    driver: bridge
+
+volumes:
+  strapidata:
